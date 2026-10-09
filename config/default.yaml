@@ -1,0 +1,77 @@
+# ===================================================================
+# Toy Car Vision — default configuration
+# ===================================================================
+
+input:
+  source: "data/test_videos/sample.mp4"
+  start_sec: null
+  end_sec: null
+  resize_width: null
+
+roi:
+  top: 30
+  bottom: 470
+  left: 0
+  right: 680
+
+homography:
+  matrix: null  # overridden by config/homography.yaml if present
+
+# ===================================================================
+# DETECTION — HSV colour segmentation + optional Bhattacharyya histogram
+# scoring (from Prof. Baltes' Bayesian Learning lecture)
+# ===================================================================
+detector:
+  method: "hsv"
+  # Set true to score confidence via Bhattacharyya histogram comparison
+  # against a per-car template image (Baltes ML: Bayesian Learning).
+  # Falls back to area-band scoring if a car has no template_path.
+  use_hist_confidence: false
+  cars:
+    - name: "RedRacer"
+      hsv_lower: [0, 0, 0]
+      hsv_upper: [179, 255, 120]
+      area_min: 100
+      area_max: 500
+      # template_path: "data/templates/redracer.png"   # optional
+  morph_kernel: 3
+  confidence_threshold: 0.3
+
+# ===================================================================
+# TRACKING — Kalman + Hungarian (SLAM course)
+# ===================================================================
+tracker:
+  process_noise: 0.01
+  measurement_noise: 0.1
+  max_lost_frames: 15
+  max_assignment_dist: 100
+  velocity_ema: 0.3
+
+# ===================================================================
+# OUTPUT
+# ===================================================================
+output:
+  mode: "both"  # udp | log | both
+  udp_host: "127.0.0.1"
+  udp_port: 5000
+  log_path: "outputs/output_log.txt"
+
+# ===================================================================
+# VISUALISATION — tuned for a clean, persistent trail
+# ===================================================================
+visualise:
+  enabled: true
+  show_window: false
+  save_video_path: "outputs/annotated.mp4"
+  draw_trail: true
+  trail_thickness: 1        # 1 = hairline (recommended)
+  trail_opacity: 0.75       # 0.0..1.0; higher = more opaque
+  max_jump_px: 80           # reject detector jumps > this many px/frame
+
+# ===================================================================
+# EVALUATION
+# ===================================================================
+evaluation:
+  ground_truth_csv: "evaluation/ground_truth/labels.csv"
+  roc_output: "evaluation/results/roc_curve.png"
+  mapping_error_output: "evaluation/results/mapping_error.png"
